@@ -1,0 +1,170 @@
+openapi: 3.1.0
+info:
+  title: Flock Signal Safety Gateway
+  version: 0.1.0
+  description: >-
+    Reference API for authorized camera-event normalization and safety-event
+    correlation. Identity resolution and criminal adjudication are not exposed.
+servers:
+  - url: http://127.0.0.1:8080
+    description: Local development only; production requires approved TLS/mTLS ingress.
+paths:
+  /healthz:
+    get:
+      operationId: health
+      summary: Service health and disabled high-risk capability status
+      responses:
+        '200':
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, identity_resolution, criminal_classification]
+                properties:
+                  status:
+                    const: ok
+                  identity_resolution:
+                    const: disabled
+                  criminal_classification:
+                    const: disabled
+  /v1/camera-events:
+    post:
+      operationId: normalizeCameraEvent
+      summary: Normalize an authorized camera event
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExternalCameraEvent'
+      responses:
+        '200':
+          description: Normalized anonymous event metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NormalizedEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /v1/safety-events:
+    post:
+      operationId: correlateSafetyEvent
+      summary: Evaluate independent contextual safety predicates
+      description: >-
+        Mask/occlusion may be carried as context, but mask presence by itself does
+        not elevate an event and the response contains no identity or guilt decision.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExternalCameraEvent'
+      responses:
+        '200':
+          description: Human-review safety event
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SafetyEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  responses:
+    BadRequest:
+      description: Invalid event metadata
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Missing or invalid development/reference bearer token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+    ExternalCameraEvent:
+      type: object
+      additionalProperties: false
+      required: [event_id, camera_id, observed_at_ns, event_kind, attributes]
+      properties:
+        event_id:
+          type: string
+          format: uuid
+        camera_id:
+          type: string
+          minLength: 1
+        observed_at_ns:
+          type: integer
+        zone_id:
+          type: [string, 'null']
+        event_kind:
+          type: string
+          minLength: 1
+        attributes:
+          type: object
+          additionalProperties:
+            type: string
+          properties:
+            face_occlusion:
+              enum: [present, absent, unknown]
+            restricted_zone:
+              enum: ['true', 'false']
+            after_hours:
+              enum: ['true', 'false']
+        source_uri:
+          type: [string, 'null']
+    NormalizedEvent:
+      allOf:
+        - $ref: '#/components/schemas/ExternalCameraEvent'
+        - type: object
+          required: [face_occlusion]
+          properties:
+            face_occlusion:
+              enum: [present, absent, unknown]
+    SafetyEvent:
+      type: object
+      additionalProperties: false
+      required:
+        - safety_event_id
+        - source_event_id
+        - rule_id
+        - severity
+        - rationale
+        - human_review_required
+      properties:
+        safety_event_id:
+          type: string
+          format: uuid
+        source_event_id:
+          type: string
+          format: uuid
+        rule_id:
+          type: string
+        severity:
+          enum: [informational, elevated]
+        rationale:
+          type: object
+          additionalProperties:
+            type: string
+        human_review_required:
+          const: true
