@@ -7,6 +7,7 @@ members = [
     "rust/signal-ledger",
     "rust/ffi",
     "rust/flock-adapter",
+    "services/gateway",
 ]
 
 [workspace.package]
@@ -23,3 +24,6 @@ sha2 = "0.10"
 thiserror = "1.0"
 rustfft = "6.2"
 ed25519-dalek = "2.1"
+axum = "0.7"
+tokio = { version = "1.38", features = ["macros", "rt-multi-thread", "net"] }
+subtle = "2.6"
