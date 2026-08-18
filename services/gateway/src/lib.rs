@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use signal_core::{CameraEvent, ObservationWindow, SafetyEvent, SignalTemplate};
 use signal_features::FeatureExtractor;
+use signal_ledger::{verify_chain_with_public_key_bytes, LedgerRecord};
 use std::collections::BTreeMap;
 use uuid::Uuid;
 
@@ -67,6 +68,18 @@ pub struct CorrelationRequest {
     pub signal_template: SignalTemplate,
 }
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct EvidenceVerifyRequest {
+    pub public_key: [u8; 32],
+    pub records: Vec<LedgerRecord>,
+}
+
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+pub struct EvidenceVerifyResponse {
+    pub valid: bool,
+    pub record_count: usize,
+}
+
 pub fn health_payload() -> HealthPayload {
     HealthPayload {
         status: "ok",
@@ -105,6 +118,19 @@ async fn correlate(Json(request): Json<CorrelationRequest>) -> ApiResult<SafetyE
         )
         .map(Json)
         .ok_or_else(|| unprocessable("camera event and observation did not satisfy time/zone correlation"))
+}
+
+async fn verify_evidence(
+    Json(request): Json<EvidenceVerifyRequest>,
+) -> ApiResult<EvidenceVerifyResponse> {
+    verify_chain_with_public_key_bytes(&request.records, &request.public_key)
+        .map(|()| {
+            Json(EvidenceVerifyResponse {
+                valid: true,
+                record_count: request.records.len(),
+            })
+        })
+        .map_err(|error| unprocessable(error.to_string()))
 }
 
 fn bad_request(message: String) -> (StatusCode, Json<ApiError>) {
@@ -149,6 +175,7 @@ pub fn app() -> Router {
         .route("/v1/signal/extract", post(extract_signal))
         .route("/v1/policy/evaluate", post(evaluate_policy))
         .route("/v1/correlate", post(correlate))
+        .route("/v1/evidence/verify", post(verify_evidence))
         .layer(middleware::from_fn(request_id))
 }
 
