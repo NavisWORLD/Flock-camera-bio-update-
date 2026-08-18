@@ -3,6 +3,8 @@ set -euo pipefail
 
 PREFIX="${FLOCK_SIGNAL_PREFIX:-/opt/flock-signal}"
 BIN_DIR="${PREFIX}/bin"
+LIB_DIR="${PREFIX}/lib"
+INCLUDE_DIR="${PREFIX}/include"
 ENV_DIR="${PREFIX}/etc"
 SERVICE_USER="flocksignal"
 
@@ -22,8 +24,12 @@ if ! id -u "$SERVICE_USER" >/dev/null 2>&1; then
 fi
 
 sudo install -d -o root -g "$SERVICE_USER" -m 0755 "$PREFIX" "$BIN_DIR"
+sudo install -d -o root -g root -m 0755 "$LIB_DIR" "$INCLUDE_DIR" "$INCLUDE_DIR/flock_signal"
 sudo install -d -o root -g "$SERVICE_USER" -m 0750 "$ENV_DIR"
 sudo install -o root -g root -m 0755 target/release/flock-signal-gateway "$BIN_DIR/flock-signal-gateway"
+sudo install -o root -g root -m 0755 target/release/libflock_signal_ffi.so "$LIB_DIR/libflock_signal_ffi.so"
+sudo install -o root -g root -m 0644 cpp/include/flock_signal/flock_signal.h "$INCLUDE_DIR/flock_signal/flock_signal.h"
+sudo install -o root -g root -m 0644 cpp/include/flock_signal/flock_signal.hpp "$INCLUDE_DIR/flock_signal/flock_signal.hpp"
 
 if [[ ! -f "$ENV_DIR/flock-signal.env" ]]; then
   tmp_env="$(mktemp)"
@@ -42,6 +48,10 @@ fi
 
 sudo install -o root -g root -m 0644 install/linux/flock-signal-gateway.service /etc/systemd/system/flock-signal-gateway.service
 
-echo "Installed to $PREFIX. Configure $ENV_DIR/flock-signal.env, then run:"
+echo "Installed runtime and SDK to $PREFIX."
+echo "  Gateway: $BIN_DIR/flock-signal-gateway"
+echo "  C/C++ headers: $INCLUDE_DIR/flock_signal"
+echo "  Shared library: $LIB_DIR/libflock_signal_ffi.so"
+echo "Configure $ENV_DIR/flock-signal.env, then run:"
 echo "  sudo systemctl daemon-reload"
 echo "  sudo systemctl enable --now flock-signal-gateway"
