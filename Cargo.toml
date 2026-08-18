@@ -4,6 +4,7 @@ members = [
     "rust/signal-core",
     "rust/signal-features",
     "rust/policy-engine",
+    "rust/signal-ledger",
 ]
 
 [workspace.package]
@@ -19,3 +20,4 @@ uuid = { version = "1.8", features = ["v4", "serde"] }
 sha2 = "0.10"
 thiserror = "1.0"
 rustfft = "6.2"
+ed25519-dalek = "2.1"
