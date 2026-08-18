@@ -6,21 +6,41 @@
 
 ## Verified in the available local execution environment
 
-### C/C++20 interface syntax
+### Expanded C++20 SDK syntax
 
-The committed C header, C++20 RAII header, and smoke program were reproduced and compiled with the available GNU C++ compiler using:
+The current committed C header, C++20 RAII header, and expanded smoke program were reproduced after adding feature-vector and provenance-digest accessors. They were compiled with the available GNU C++ compiler using:
 
 ```bash
 g++ -std=c++20 -I<include-root> -Wall -Wextra -Werror -c smoke.cpp -o smoke.o
 ```
 
-Result: **PASS** (`CPP_SYNTAX_OK`).
+Result: **PASS** (`EXPANDED_CPP_SYNTAX_OK`).
 
-This proves the C++ source/header syntax compiles under the available compiler. It does not prove the Rust `cdylib` links or executes because Rust/Cargo is not installed in the local execution container.
+The checked interface includes:
+
+- engine creation/destruction;
+- signal-template extraction;
+- template quality;
+- feature count and feature-vector copy-out;
+- 32-byte source/provenance digest copy-out;
+- C++ `SignalTemplate::features()`;
+- C++ `SignalTemplate::source_digest()`.
+
+This proves the current C++ source/header syntax compiles under the available compiler. It does not prove the Rust `cdylib` links or executes because Rust/Cargo is not installed in the local execution container.
+
+### C11 compatibility header syntax
+
+The current `flock_signal.h` was also compiled from a C translation unit using:
+
+```bash
+gcc -std=c11 -I<include-root> -Wall -Wextra -Werror -c c_header_smoke.c -o c_header_smoke.o
+```
+
+Result: **PASS** (`C11_HEADER_SYNTAX_OK`).
 
 ### Linux shell syntax
 
-The Linux installer structure was checked with `bash -n` after the service-account and environment-permission fix.
+The Linux installer structure was checked with `bash -n` after the service-account/environment-permission fix and SDK packaging updates.
 
 Result: **PASS** (`SHELL_SYNTAX_OK`).
 
