@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "rust/signal-core",
     "rust/signal-features",
+    "rust/policy-engine",
 ]
 
 [workspace.package]
