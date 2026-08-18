@@ -18,6 +18,24 @@ int main() {
         std::cerr << "unexpected template quality\n";
         return 1;
     }
-    std::cout << "C++/Rust FFI smoke OK quality=" << result.quality() << '\n';
+
+    const auto features = result.features();
+    if (features.size() != 3 || !(features[0] > 0.0F)) {
+        std::cerr << "unexpected feature vector\n";
+        return 2;
+    }
+
+    const auto digest = result.source_digest();
+    bool any_digest_byte = false;
+    for (const auto byte : digest) {
+        any_digest_byte = any_digest_byte || byte != 0;
+    }
+    if (!any_digest_byte) {
+        std::cerr << "source digest was unexpectedly all zero\n";
+        return 3;
+    }
+
+    std::cout << "C++/Rust FFI smoke OK quality=" << result.quality()
+              << " features=" << features.size() << '\n';
     return 0;
 }
