@@ -68,6 +68,10 @@ impl LedgerSigner {
         self.signing_key.verifying_key()
     }
 
+    pub fn verifying_key_bytes(&self) -> [u8; 32] {
+        self.signing_key.verifying_key().to_bytes()
+    }
+
     pub fn sign_record(&self, input: NewLedgerRecord) -> LedgerRecord {
         let record_id = Uuid::new_v4();
         let payload = RecordSigningPayload {
@@ -108,10 +112,20 @@ pub enum LedgerError {
     ChainDiscontinuity(usize),
     #[error("record digest mismatch at index {0}")]
     DigestMismatch(usize),
+    #[error("invalid public key")]
+    InvalidPublicKey,
     #[error("invalid signature encoding at index {0}")]
     InvalidSignatureEncoding(usize),
     #[error("signature verification failed at index {0}")]
     SignatureVerification(usize),
+}
+
+pub fn verify_chain_with_public_key_bytes(
+    records: &[LedgerRecord],
+    public_key: &[u8; 32],
+) -> Result<(), LedgerError> {
+    let key = VerifyingKey::from_bytes(public_key).map_err(|_| LedgerError::InvalidPublicKey)?;
+    verify_chain(records, &key)
 }
 
 pub fn verify_chain(records: &[LedgerRecord], key: &VerifyingKey) -> Result<(), LedgerError> {
@@ -174,6 +188,7 @@ mod tests {
             policy_context: LedgerPolicyContext::default(),
         });
         assert!(verify_chain(&[first.clone()], &signer.verifying_key()).is_ok());
+        assert!(verify_chain_with_public_key_bytes(&[first.clone()], &signer.verifying_key_bytes()).is_ok());
 
         let mut tampered = first;
         tampered.payload_digest = [9_u8; 32];
@@ -202,5 +217,23 @@ mod tests {
             policy_context: LedgerPolicyContext::default(),
         });
         assert!(verify_chain(&[second, first], &signer.verifying_key()).is_err());
+    }
+
+    #[test]
+    fn malformed_public_key_is_rejected() {
+        let signer = LedgerSigner::generate("test-key");
+        let record = signer.sign_record(NewLedgerRecord {
+            observed_at_ns: 1,
+            event_id: Uuid::new_v4(),
+            sensor_ids: vec![],
+            template_ids: vec![],
+            payload_digest: [4_u8; 32],
+            previous_record_digest: [0_u8; 32],
+            policy_context: LedgerPolicyContext::default(),
+        });
+        let mut invalid = [0_u8; 32];
+        invalid[0] = 0xff;
+        let result = verify_chain_with_public_key_bytes(&[record], &invalid);
+        assert!(result.is_err());
     }
 }
