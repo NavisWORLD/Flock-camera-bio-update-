@@ -1,0 +1,12 @@
+{
+  "camera_id": "flock-sim-17",
+  "observed_at_ns": 1724012345000000000,
+  "zone_id": "school-north",
+  "event_kind": "vehicle_or_person_observation",
+  "attributes": {
+    "face_occlusion": "present",
+    "restricted_zone": "true",
+    "after_hours": "true"
+  },
+  "source_uri": "fixture://sample-camera-event"
+}

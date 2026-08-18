@@ -1,0 +1,10 @@
+[package]
+name = "event-correlator"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+signal-core = { path = "../../rust/signal-core" }
+policy-engine = { path = "../../rust/policy-engine" }

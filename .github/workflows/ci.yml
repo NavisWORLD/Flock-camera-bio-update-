@@ -1,0 +1,78 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - feature/flock-signal-platform
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@1.82.0
+        with:
+          components: rustfmt, clippy
+
+      - name: Verify Rust and C++
+        run: bash scripts/verify.sh
+
+      - name: Package Linux evaluation bundle
+        run: |
+          mkdir -p dist/linux/bin dist/linux/include/flock_signal dist/linux/docs
+          cp target/release/flock-signal-gateway dist/linux/bin/
+          cp target/release/libsignal_ffi.so dist/linux/bin/
+          cp cpp/include/flock_signal/flock_signal.h dist/linux/include/flock_signal/
+          cp cpp/include/flock_signal/flock_signal.hpp dist/linux/include/flock_signal/
+          cp README.md LICENSE dist/linux/docs/
+          cp compliance/SCIENTIFIC_CLAIMS.md compliance/SECURITY_CONTROLS.md compliance/THREAT_MODEL.md dist/linux/docs/
+          tar -C dist -czf flock-signal-linux-x86_64.tar.gz linux
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flock-signal-linux-x86_64
+          path: flock-signal-linux-x86_64.tar.gz
+          if-no-files-found: error
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@1.82.0
+        with:
+          components: rustfmt, clippy
+
+      - name: Verify Rust and C++
+        shell: pwsh
+        run: .\scripts\verify.ps1
+
+      - name: Package Windows evaluation bundle
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist\windows\bin | Out-Null
+          New-Item -ItemType Directory -Force dist\windows\include\flock_signal | Out-Null
+          New-Item -ItemType Directory -Force dist\windows\docs | Out-Null
+          Copy-Item target\release\flock-signal-gateway.exe dist\windows\bin\
+          Copy-Item target\release\signal_ffi.dll dist\windows\bin\
+          Copy-Item cpp\include\flock_signal\flock_signal.h dist\windows\include\flock_signal\
+          Copy-Item cpp\include\flock_signal\flock_signal.hpp dist\windows\include\flock_signal\
+          Copy-Item README.md, LICENSE dist\windows\docs\
+          Copy-Item compliance\SCIENTIFIC_CLAIMS.md, compliance\SECURITY_CONTROLS.md, compliance\THREAT_MODEL.md dist\windows\docs\
+          Compress-Archive -Path dist\windows\* -DestinationPath flock-signal-windows-x86_64.zip -Force
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flock-signal-windows-x86_64
+          path: flock-signal-windows-x86_64.zip
+          if-no-files-found: error
