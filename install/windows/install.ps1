@@ -34,7 +34,11 @@ try {
     Copy-Item "cpp\include\flock_signal\flock_signal.hpp" (Join-Path $InstallDir "include\flock_signal") -Force
 
     $EnvFile = Join-Path $InstallDir "gateway.env.example"
-    "FLOCK_SIGNAL_BIND=0.0.0.0:8080`nFLOCK_SIGNAL_DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/flock_signal" | Set-Content -Path $EnvFile -Encoding UTF8
+    @"
+FLOCK_SIGNAL_BIND=0.0.0.0:8080
+FLOCK_SIGNAL_API_KEY=REPLACE_WITH_SECRET_MANAGER_VALUE
+FLOCK_SIGNAL_DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/flock_signal
+"@ | Set-Content -Path $EnvFile -Encoding UTF8
 
     if ($RegisterService) {
         $principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
@@ -51,7 +55,7 @@ try {
     }
 
     Write-Host "Installed Flock Signal platform to $InstallDir"
-    Write-Host "Configure production secrets outside the repository before starting the service."
+    Write-Host "Set FLOCK_SIGNAL_API_KEY and database secrets outside source control before starting the service."
 }
 finally {
     Pop-Location
