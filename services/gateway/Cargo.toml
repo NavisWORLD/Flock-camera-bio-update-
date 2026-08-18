@@ -1,0 +1,13 @@
+[package]
+name = "flock-signal-gateway"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+flock-adapter = { path = "../../rust/flock-adapter" }
+serde.workspace = true
+serde_json.workspace = true
+axum.workspace = true
+tokio.workspace = true
+subtle.workspace = true
