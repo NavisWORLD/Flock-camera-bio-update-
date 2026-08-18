@@ -8,10 +8,9 @@
 *.pfx
 secrets/
 
-# Rust
+# Rust build outputs
 /target/
 **/target/
-Cargo.lock
 
 # CMake/native builds
 /build/
