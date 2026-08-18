@@ -1,0 +1,27 @@
+[Unit]
+Description=Flock Signal Safety Gateway
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=flocksignal
+Group=flocksignal
+EnvironmentFile=/opt/flock-signal/etc/flock-signal.env
+ExecStart=/opt/flock-signal/bin/flock-signal-gateway
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictAddressFamilies=AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

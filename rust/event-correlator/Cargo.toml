@@ -1,0 +1,10 @@
+[package]
+name = "event-correlator"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+flock-adapter = { path = "../flock-adapter" }
+serde.workspace = true
+uuid.workspace = true

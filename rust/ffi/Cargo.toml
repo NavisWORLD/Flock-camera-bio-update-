@@ -1,0 +1,13 @@
+[package]
+name = "flock-signal-ffi"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+signal-core = { path = "../signal-core" }
+signal-features = { path = "../signal-features" }
+uuid.workspace = true

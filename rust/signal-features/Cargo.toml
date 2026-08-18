@@ -1,0 +1,11 @@
+[package]
+name = "signal-features"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+signal-core = { path = "../signal-core" }
+rustfft.workspace = true
+thiserror.workspace = true
+uuid.workspace = true

@@ -1,0 +1,2 @@
+{"event_id":"00000000-0000-0000-0000-000000000101","camera_id":"sim-school-north","observed_at_ns":1000000000,"zone_id":"school-perimeter","event_kind":"motion","attributes":{"face_occlusion":"absent","restricted_zone":"false","after_hours":"false"},"source_uri":"simulator://event/101"}
+{"event_id":"00000000-0000-0000-0000-000000000102","camera_id":"sim-school-service","observed_at_ns":2000000000,"zone_id":"service-yard","event_kind":"motion","attributes":{"face_occlusion":"present","restricted_zone":"true","after_hours":"true"},"source_uri":"simulator://event/102"}
