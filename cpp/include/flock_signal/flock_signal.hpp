@@ -3,10 +3,13 @@
 
 #include "flock_signal.h"
 
+#include <array>
+#include <cstdint>
 #include <span>
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace flock_signal {
 
@@ -35,6 +38,27 @@ public:
 
     [[nodiscard]] float quality() const noexcept {
         return fs_template_quality(handle_);
+    }
+
+    [[nodiscard]] std::vector<float> features() const {
+        std::vector<float> values(fs_template_feature_count(handle_));
+        if (values.empty()) {
+            return values;
+        }
+        const auto status = fs_template_copy_features(handle_, values.data(), values.size());
+        if (status != FS_OK) {
+            throw std::runtime_error("failed to copy signal template features");
+        }
+        return values;
+    }
+
+    [[nodiscard]] std::array<std::uint8_t, 32> source_digest() const {
+        std::array<std::uint8_t, 32> digest{};
+        const auto status = fs_template_copy_source_digest(handle_, digest.data(), digest.size());
+        if (status != FS_OK) {
+            throw std::runtime_error("failed to copy signal template source digest");
+        }
+        return digest;
     }
 
 private:
