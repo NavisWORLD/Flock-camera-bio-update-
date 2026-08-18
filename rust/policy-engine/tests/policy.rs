@@ -10,23 +10,36 @@ fn anonymous_correlation_is_allowed_by_default() {
 }
 
 #[test]
-fn identity_resolution_requires_explicit_research_authorization() {
+fn production_engine_denies_identity_resolution() {
     let denied = PolicyEngine::default().evaluate(
         PolicyAction::IdentityResolution,
         &PolicyContext::default(),
     );
     assert!(!denied.allowed);
+}
 
-    let context = PolicyContext {
-        research_authorization: Some(ResearchAuthorization {
-            authority: "controlled-study-board".into(),
-            case_reference: "study-001".into(),
-            purpose: "blinded repeatability validation".into(),
-        }),
-        ..PolicyContext::default()
-    };
-    let allowed = PolicyEngine::default().evaluate(PolicyAction::IdentityResolution, &context);
+#[test]
+fn identity_resolution_requires_explicit_research_engine_configuration() {
+    let authorization = ResearchAuthorization::new(
+        "controlled-study-board",
+        "study-001",
+        "blinded repeatability validation",
+    )
+    .unwrap();
+    let research_engine = PolicyEngine::for_authorized_research(authorization);
+    let allowed = research_engine.evaluate(
+        PolicyAction::IdentityResolution,
+        &PolicyContext::default(),
+    );
     assert!(allowed.allowed);
+    assert!(allowed.reason.contains("study-001"));
+}
+
+#[test]
+fn incomplete_research_authorization_is_rejected() {
+    assert!(ResearchAuthorization::new("", "study-001", "validation").is_err());
+    assert!(ResearchAuthorization::new("board", "", "validation").is_err());
+    assert!(ResearchAuthorization::new("board", "study-001", "").is_err());
 }
 
 #[test]
