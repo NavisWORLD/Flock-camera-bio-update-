@@ -34,6 +34,17 @@ int32_t fs_engine_extract_template(
     fs_template** out_template
 );
 float fs_template_quality(const fs_template* value);
+size_t fs_template_feature_count(const fs_template* value);
+int32_t fs_template_copy_features(
+    const fs_template* value,
+    float* out_features,
+    size_t capacity
+);
+int32_t fs_template_copy_source_digest(
+    const fs_template* value,
+    uint8_t* out_digest,
+    size_t capacity
+);
 void fs_template_destroy(fs_template* value);
 
 #ifdef __cplusplus
