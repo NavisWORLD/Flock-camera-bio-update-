@@ -11,3 +11,4 @@ serde_json.workspace = true
 axum.workspace = true
 tokio.workspace = true
 subtle.workspace = true
+uuid.workspace = true
