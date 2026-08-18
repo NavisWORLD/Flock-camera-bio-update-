@@ -11,6 +11,6 @@ while IFS= read -r event; do
     -H "Authorization: Bearer ${FLOCK_SIGNAL_API_TOKEN}" \
     -H "Content-Type: application/json" \
     --data "$event" \
-    "${BASE_URL}/v1/camera-events"
+    "${BASE_URL}/v1/safety-events"
   printf '\n'
 done < "${ROOT}/simulator/sample-events.jsonl"
