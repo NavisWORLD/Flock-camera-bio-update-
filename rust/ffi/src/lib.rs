@@ -36,6 +36,7 @@ pub unsafe extern "C" fn fs_engine_create(out_engine: *mut *mut fs_engine) -> i3
     if out_engine.is_null() {
         return FS_ERR_NULL;
     }
+    unsafe { ptr::write(out_engine, ptr::null_mut()) };
     match catch_unwind(AssertUnwindSafe(|| {
         let engine = Box::new(fs_engine {
             extractor: FeatureExtractor::default(),
@@ -64,7 +65,11 @@ pub unsafe extern "C" fn fs_engine_extract_template(
     channel_count: usize,
     out_template: *mut *mut fs_template,
 ) -> i32 {
-    if engine.is_null() || channels.is_null() || out_template.is_null() {
+    if out_template.is_null() {
+        return FS_ERR_NULL;
+    }
+    unsafe { ptr::write(out_template, ptr::null_mut()) };
+    if engine.is_null() || channels.is_null() {
         return FS_ERR_NULL;
     }
     if channel_count == 0 {
