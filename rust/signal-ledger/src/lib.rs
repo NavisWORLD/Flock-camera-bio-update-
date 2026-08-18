@@ -101,7 +101,7 @@ impl LedgerVerifier {
             return Err(LedgerError::DigestMismatch);
         }
 
-        let signature = Signature::from_slice(&record.signature)
+        let signature = Signature::try_from(record.signature.as_slice())
             .map_err(|_| LedgerError::InvalidSignature)?;
         verifying_key
             .verify(&record.record_digest, &signature)
