@@ -13,6 +13,7 @@ serde_json.workspace = true
 uuid.workspace = true
 signal-core = { path = "../../rust/signal-core" }
 signal-features = { path = "../../rust/signal-features" }
+signal-ledger = { path = "../../rust/signal-ledger" }
 flock-adapter = { path = "../../rust/flock-adapter" }
 policy-engine = { path = "../../rust/policy-engine" }
 event-correlator = { path = "../event-correlator" }
