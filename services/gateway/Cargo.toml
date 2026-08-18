@@ -6,6 +6,7 @@ rust-version.workspace = true
 
 [dependencies]
 flock-adapter = { path = "../../rust/flock-adapter" }
+event-correlator = { path = "../../rust/event-correlator" }
 serde.workspace = true
 serde_json.workspace = true
 axum.workspace = true
