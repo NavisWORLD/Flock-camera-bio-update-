@@ -1,0 +1,38 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+
+# Rust
+/target/
+**/target/
+Cargo.lock
+
+# CMake/native builds
+/build/
+/cmake-build-*/
+CMakeCache.txt
+CMakeFiles/
+*.obj
+*.o
+*.so
+*.dylib
+*.dll
+*.lib
+*.a
+
+# Editors/OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local databases/logs
+*.log
+*.db
+*.sqlite
