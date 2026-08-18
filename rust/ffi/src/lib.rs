@@ -30,7 +30,7 @@ pub struct fs_channel_frame {
 }
 
 #[no_mangle]
-pub extern "C" fn fs_engine_create(out_engine: *mut *mut fs_engine) -> i32 {
+pub unsafe extern "C" fn fs_engine_create(out_engine: *mut *mut fs_engine) -> i32 {
     catch_unwind(AssertUnwindSafe(|| {
         if out_engine.is_null() {
             return FS_ERR_NULL;
@@ -47,7 +47,7 @@ pub extern "C" fn fs_engine_create(out_engine: *mut *mut fs_engine) -> i32 {
 }
 
 #[no_mangle]
-pub extern "C" fn fs_engine_destroy(engine: *mut fs_engine) {
+pub unsafe extern "C" fn fs_engine_destroy(engine: *mut fs_engine) {
     let _ = catch_unwind(AssertUnwindSafe(|| {
         if !engine.is_null() {
             unsafe {
@@ -58,7 +58,7 @@ pub extern "C" fn fs_engine_destroy(engine: *mut fs_engine) {
 }
 
 #[no_mangle]
-pub extern "C" fn fs_engine_extract_template(
+pub unsafe extern "C" fn fs_engine_extract_template(
     engine: *mut fs_engine,
     channels: *const fs_channel_frame,
     channel_count: usize,
@@ -75,7 +75,11 @@ pub extern "C" fn fs_engine_extract_template(
         let channel_slice = unsafe { std::slice::from_raw_parts(channels, channel_count) };
         let mut frames = Vec::with_capacity(channel_count);
         for (index, channel) in channel_slice.iter().enumerate() {
-            if channel.samples.is_null() || channel.sample_count == 0 || !channel.sample_rate_hz.is_finite() || channel.sample_rate_hz <= 0.0 {
+            if channel.samples.is_null()
+                || channel.sample_count == 0
+                || !channel.sample_rate_hz.is_finite()
+                || channel.sample_rate_hz <= 0.0
+            {
                 return FS_ERR_INPUT;
             }
             let samples = unsafe { std::slice::from_raw_parts(channel.samples, channel.sample_count) }.to_vec();
@@ -106,7 +110,7 @@ pub extern "C" fn fs_engine_extract_template(
 }
 
 #[no_mangle]
-pub extern "C" fn fs_template_destroy(value: *mut fs_template) {
+pub unsafe extern "C" fn fs_template_destroy(value: *mut fs_template) {
     let _ = catch_unwind(AssertUnwindSafe(|| {
         if !value.is_null() {
             unsafe {
@@ -117,7 +121,7 @@ pub extern "C" fn fs_template_destroy(value: *mut fs_template) {
 }
 
 #[no_mangle]
-pub extern "C" fn fs_template_quality(value: *const fs_template, out_quality: *mut f32) -> i32 {
+pub unsafe extern "C" fn fs_template_quality(value: *const fs_template, out_quality: *mut f32) -> i32 {
     catch_unwind(AssertUnwindSafe(|| {
         if value.is_null() || out_quality.is_null() {
             return FS_ERR_NULL;
@@ -131,7 +135,10 @@ pub extern "C" fn fs_template_quality(value: *const fs_template, out_quality: *m
 }
 
 #[no_mangle]
-pub extern "C" fn fs_template_uncertainty(value: *const fs_template, out_uncertainty: *mut f32) -> i32 {
+pub unsafe extern "C" fn fs_template_uncertainty(
+    value: *const fs_template,
+    out_uncertainty: *mut f32,
+) -> i32 {
     catch_unwind(AssertUnwindSafe(|| {
         if value.is_null() || out_uncertainty.is_null() {
             return FS_ERR_NULL;
@@ -145,7 +152,7 @@ pub extern "C" fn fs_template_uncertainty(value: *const fs_template, out_uncerta
 }
 
 #[no_mangle]
-pub extern "C" fn fs_template_free_and_null(value: *mut *mut fs_template) -> i32 {
+pub unsafe extern "C" fn fs_template_free_and_null(value: *mut *mut fs_template) -> i32 {
     catch_unwind(AssertUnwindSafe(|| {
         if value.is_null() {
             return FS_ERR_NULL;
@@ -169,14 +176,18 @@ mod tests {
     #[test]
     fn create_and_destroy_engine() {
         let mut engine: *mut fs_engine = ptr::null_mut();
-        assert_eq!(fs_engine_create(&mut engine), FS_OK);
-        assert!(!engine.is_null());
-        fs_engine_destroy(engine);
+        unsafe {
+            assert_eq!(fs_engine_create(&mut engine), FS_OK);
+            assert!(!engine.is_null());
+            fs_engine_destroy(engine);
+        }
     }
 
     #[test]
     fn null_engine_output_is_rejected() {
-        assert_eq!(fs_engine_create(ptr::null_mut()), FS_ERR_NULL);
+        unsafe {
+            assert_eq!(fs_engine_create(ptr::null_mut()), FS_ERR_NULL);
+        }
     }
 
     #[test]
@@ -190,12 +201,14 @@ mod tests {
         };
         let mut engine: *mut fs_engine = ptr::null_mut();
         let mut template: *mut fs_template = ptr::null_mut();
-        assert_eq!(fs_engine_create(&mut engine), FS_OK);
-        assert_eq!(fs_engine_extract_template(engine, &frame, 1, &mut template), FS_OK);
-        let mut quality = -1.0;
-        assert_eq!(fs_template_quality(template, &mut quality), FS_OK);
-        assert!((0.0..=1.0).contains(&quality));
-        fs_template_destroy(template);
-        fs_engine_destroy(engine);
+        unsafe {
+            assert_eq!(fs_engine_create(&mut engine), FS_OK);
+            assert_eq!(fs_engine_extract_template(engine, &frame, 1, &mut template), FS_OK);
+            let mut quality = -1.0;
+            assert_eq!(fs_template_quality(template, &mut quality), FS_OK);
+            assert!((0.0..=1.0).contains(&quality));
+            fs_template_destroy(template);
+            fs_engine_destroy(engine);
+        }
     }
 }
