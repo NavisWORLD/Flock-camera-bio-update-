@@ -187,9 +187,9 @@ mod tests {
             previous_record_digest: [0_u8; 32],
             policy_context: LedgerPolicyContext::default(),
         });
-        assert!(verify_chain(&[first.clone()], &signer.verifying_key()).is_ok());
+        assert!(verify_chain(std::slice::from_ref(&first), &signer.verifying_key()).is_ok());
         assert!(verify_chain_with_public_key_bytes(
-            &[first.clone()],
+            std::slice::from_ref(&first),
             &signer.verifying_key_bytes()
         )
         .is_ok());
