@@ -138,6 +138,64 @@ pub unsafe extern "C" fn fs_template_quality(value: *const fs_template) -> f32 {
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn fs_template_feature_count(value: *const fs_template) -> usize {
+    if value.is_null() {
+        return 0;
+    }
+    catch_unwind(AssertUnwindSafe(|| unsafe { (&*value).inner.features.len() })).unwrap_or(0)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fs_template_copy_features(
+    value: *const fs_template,
+    out_features: *mut f32,
+    capacity: usize,
+) -> i32 {
+    if value.is_null() || out_features.is_null() {
+        return FS_ERR_NULL;
+    }
+    match catch_unwind(AssertUnwindSafe(|| {
+        let features = unsafe { &(&*value).inner.features };
+        if capacity < features.len() {
+            return Err(FS_ERR_INVALID);
+        }
+        unsafe {
+            ptr::copy_nonoverlapping(features.as_ptr(), out_features, features.len());
+        }
+        Ok(FS_OK)
+    })) {
+        Ok(Ok(code)) => code,
+        Ok(Err(code)) => code,
+        Err(_) => FS_ERR_INTERNAL,
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fs_template_copy_source_digest(
+    value: *const fs_template,
+    out_digest: *mut u8,
+    capacity: usize,
+) -> i32 {
+    if value.is_null() || out_digest.is_null() {
+        return FS_ERR_NULL;
+    }
+    match catch_unwind(AssertUnwindSafe(|| {
+        if capacity < 32 {
+            return Err(FS_ERR_INVALID);
+        }
+        let digest = unsafe { &(&*value).inner.source_digest };
+        unsafe {
+            ptr::copy_nonoverlapping(digest.as_ptr(), out_digest, digest.len());
+        }
+        Ok(FS_OK)
+    })) {
+        Ok(Ok(code)) => code,
+        Ok(Err(code)) => code,
+        Err(_) => FS_ERR_INTERNAL,
+    }
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn fs_template_destroy(value: *mut fs_template) {
     if value.is_null() {
         return;
