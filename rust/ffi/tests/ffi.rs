@@ -6,13 +6,13 @@ use std::ptr;
 
 #[test]
 fn create_rejects_null_output_pointer() {
-    assert_eq!(fs_engine_create(ptr::null_mut()), FS_ERR_NULL);
+    assert_eq!(unsafe { fs_engine_create(ptr::null_mut()) }, FS_ERR_NULL);
 }
 
 #[test]
 fn engine_lifecycle_and_extraction_work() {
     let mut engine: *mut fs_engine = ptr::null_mut();
-    assert_eq!(fs_engine_create(&mut engine), FS_OK);
+    assert_eq!(unsafe { fs_engine_create(&mut engine) }, FS_OK);
     assert!(!engine.is_null());
 
     let samples = [1.0_f32, -1.0, 1.0, -1.0];
@@ -24,20 +24,22 @@ fn engine_lifecycle_and_extraction_work() {
     };
     let mut template: *mut fs_template = ptr::null_mut();
     assert_eq!(
-        fs_engine_extract_template(engine, &frame, 1, &mut template),
+        unsafe { fs_engine_extract_template(engine, &frame, 1, &mut template) },
         FS_OK
     );
     assert!(!template.is_null());
-    assert!(fs_template_quality(template) > 0.0);
+    assert!(unsafe { fs_template_quality(template) } > 0.0);
 
-    fs_template_destroy(template);
-    fs_engine_destroy(engine);
+    unsafe {
+        fs_template_destroy(template);
+        fs_engine_destroy(engine);
+    }
 }
 
 #[test]
 fn extraction_rejects_nonempty_channel_with_null_samples() {
     let mut engine: *mut fs_engine = ptr::null_mut();
-    assert_eq!(fs_engine_create(&mut engine), FS_OK);
+    assert_eq!(unsafe { fs_engine_create(&mut engine) }, FS_OK);
     let frame = fs_channel_frame {
         samples: ptr::null(),
         sample_count: 4,
@@ -46,8 +48,8 @@ fn extraction_rejects_nonempty_channel_with_null_samples() {
     };
     let mut template: *mut fs_template = ptr::null_mut();
     assert_eq!(
-        fs_engine_extract_template(engine, &frame, 1, &mut template),
+        unsafe { fs_engine_extract_template(engine, &frame, 1, &mut template) },
         FS_ERR_INVALID
     );
-    fs_engine_destroy(engine);
+    unsafe { fs_engine_destroy(engine) };
 }
