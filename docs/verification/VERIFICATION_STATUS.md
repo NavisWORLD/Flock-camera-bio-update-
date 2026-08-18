@@ -2,6 +2,7 @@
 
 **Branch:** `feat/flock-signal-safety-v0.1`  
 **PR:** #1  
+**Current head checked:** `92b0cfbad2e88d1e5ecc1d86361b58efdf757560`  
 **Status:** Engineering implementation complete for the v0.1 plan; full runtime verification is blocked by the current GitHub Actions runner environment and is therefore **not** claimed as complete.
 
 ## Verified in the available local execution environment
@@ -53,11 +54,11 @@ The CI workflow includes four jobs:
 - `native` — Rust-backed CMake/C++ smoke build and `ctest`;
 - `hygiene` — checkout plus obvious-secret-pattern scan.
 
-Observed run `32189581156` for commit `d8d11bfcc133a662f879abaadca2f13acf4dbea8` completed as failure. GitHub reported **all four jobs failed with `steps: null`**, including `runner-smoke`. No job log was available through the connected GitHub API.
+Latest observed run `32190634255` for head `92b0cfbad2e88d1e5ecc1d86361b58efdf757560` completed as failure. GitHub reported **all four jobs failed with `steps: null`**, including the no-checkout, no-toolchain `runner-smoke` job. No executable job step or decoded job log was available through the connected GitHub API.
 
-Because a no-checkout, no-toolchain `echo` job also failed before an executable step appeared, this run cannot be used as evidence of a Rust/compiler/test failure. It indicates the current GitHub Actions execution environment/account/runner is blocking job startup before repository code executes.
+Because the echo-only runner diagnostic also failed before an executable step appeared, this run cannot be used as evidence of a Rust compiler, test, CMake, or repository-hygiene failure. It indicates that the current GitHub Actions execution environment/account/runner is blocking job startup before repository code executes.
 
-An earlier run (`32189434037`) showed the same pre-step pattern for the Rust/native/hygiene jobs.
+Previous runs `32189581156` and `32189434037` showed the same pre-step pattern.
 
 ## Not yet verified — do not claim PASS
 
