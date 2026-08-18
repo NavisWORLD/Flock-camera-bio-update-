@@ -4,7 +4,7 @@ services:
     environment:
       POSTGRES_DB: flock_signal
       POSTGRES_USER: flock_signal
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-flock_signal_dev}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD before starting the stack}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U flock_signal -d flock_signal"]
       interval: 5s
@@ -20,7 +20,8 @@ services:
       dockerfile: install/docker/Dockerfile
     environment:
       FLOCK_SIGNAL_BIND: 0.0.0.0:8080
-      FLOCK_SIGNAL_DATABASE_URL: postgresql://flock_signal:${POSTGRES_PASSWORD:-flock_signal_dev}@postgres:5432/flock_signal
+      FLOCK_SIGNAL_API_KEY: ${FLOCK_SIGNAL_API_KEY:?Set FLOCK_SIGNAL_API_KEY before starting the stack}
+      FLOCK_SIGNAL_DATABASE_URL: postgresql://flock_signal:${POSTGRES_PASSWORD}@postgres:5432/flock_signal
     ports:
       - "8080:8080"
     depends_on:
