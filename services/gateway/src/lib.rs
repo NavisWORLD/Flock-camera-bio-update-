@@ -1,12 +1,17 @@
 use axum::{
     extract::Request,
-    http::{HeaderName, HeaderValue},
+    http::{HeaderName, HeaderValue, StatusCode},
     middleware::{self, Next},
     response::Response,
-    routing::get,
+    routing::{get, post},
     Json, Router,
 };
-use serde::Serialize;
+use flock_adapter::FlockAdapter;
+use policy_engine::{PolicyAction, PolicyContext, PolicyDecision, PolicyEngine};
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use signal_core::{CameraEvent, ObservationWindow, SignalTemplate};
+use signal_features::FeatureExtractor;
 use std::collections::BTreeMap;
 use uuid::Uuid;
 
@@ -41,6 +46,19 @@ pub struct HealthPayload {
     pub service: &'static str,
 }
 
+#[derive(Debug, Clone, Serialize)]
+struct ApiError {
+    error: String,
+}
+
+type ApiResult<T> = Result<Json<T>, (StatusCode, Json<ApiError>)>;
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct PolicyRequest {
+    pub action: PolicyAction,
+    pub context: PolicyContext,
+}
+
 pub fn health_payload() -> HealthPayload {
     HealthPayload {
         status: "ok",
@@ -50,6 +68,37 @@ pub fn health_payload() -> HealthPayload {
 
 async fn health() -> Json<HealthPayload> {
     Json(health_payload())
+}
+
+async fn normalize_camera(Json(value): Json<Value>) -> ApiResult<CameraEvent> {
+    let encoded = serde_json::to_string(&value).map_err(internal_error)?;
+    FlockAdapter::normalize_json(&encoded)
+        .map(Json)
+        .map_err(|error| bad_request(error.to_string()))
+}
+
+async fn extract_signal(Json(window): Json<ObservationWindow>) -> ApiResult<SignalTemplate> {
+    FeatureExtractor::default()
+        .extract(&window)
+        .map(Json)
+        .map_err(|error| bad_request(error.to_string()))
+}
+
+async fn evaluate_policy(Json(request): Json<PolicyRequest>) -> Json<PolicyDecision> {
+    Json(PolicyEngine.evaluate(request.action, &request.context))
+}
+
+fn bad_request(message: String) -> (StatusCode, Json<ApiError>) {
+    (StatusCode::BAD_REQUEST, Json(ApiError { error: message }))
+}
+
+fn internal_error(error: serde_json::Error) -> (StatusCode, Json<ApiError>) {
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(ApiError {
+            error: error.to_string(),
+        }),
+    )
 }
 
 async fn request_id(mut request: Request, next: Next) -> Response {
@@ -68,6 +117,9 @@ pub fn app() -> Router {
     Router::new()
         .route("/healthz", get(health))
         .route("/readyz", get(health))
+        .route("/v1/camera/normalize", post(normalize_camera))
+        .route("/v1/signal/extract", post(extract_signal))
+        .route("/v1/policy/evaluate", post(evaluate_policy))
         .layer(middleware::from_fn(request_id))
 }
 
@@ -94,5 +146,19 @@ mod tests {
         let payload = health_payload();
         assert_eq!(payload.status, "ok");
         assert_eq!(payload.service, "flock-signal-gateway");
+    }
+
+    #[test]
+    fn policy_engine_keeps_mask_only_non_elevated() {
+        let request = PolicyRequest {
+            action: PolicyAction::RestrictedZoneReview,
+            context: PolicyContext {
+                face_occlusion: Some(true),
+                ..PolicyContext::default()
+            },
+        };
+        let decision = PolicyEngine.evaluate(request.action, &request.context);
+        assert!(decision.allowed);
+        assert!(!decision.elevated);
     }
 }
