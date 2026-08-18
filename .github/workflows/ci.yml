@@ -23,6 +23,21 @@ jobs:
           echo "slim-runner-started"
           uname -a
 
+  lockfile:
+    runs-on: ubuntu-latest
+    env:
+      CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.84.0
+      - name: Generate Rust 1.82-compatible lockfile
+        run: cargo generate-lockfile
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cargo-lock-rust-1.82
+          path: Cargo.lock
+          if-no-files-found: error
+
   linux:
     runs-on: ubuntu-latest
     steps:
