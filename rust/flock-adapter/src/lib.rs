@@ -43,7 +43,6 @@ impl FlockAdapter {
             *value = match value.trim().to_ascii_lowercase().as_str() {
                 "present" | "true" | "yes" => "present".into(),
                 "absent" | "false" | "no" => "absent".into(),
-                "unknown" => "unknown".into(),
                 _ => "unknown".into(),
             };
         }
