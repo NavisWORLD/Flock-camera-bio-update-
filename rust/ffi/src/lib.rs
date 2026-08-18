@@ -29,6 +29,12 @@ pub struct fs_channel_frame {
     pub timestamp_ns: i64,
 }
 
+/// Creates an engine and stores its opaque handle in `out_engine`.
+///
+/// # Safety
+/// `out_engine` must be either null or a valid, writable pointer to storage for one
+/// `*mut fs_engine`. A returned non-null handle must later be released exactly once
+/// with [`fs_engine_destroy`].
 #[no_mangle]
 pub unsafe extern "C" fn fs_engine_create(out_engine: *mut *mut fs_engine) -> i32 {
     catch_unwind(AssertUnwindSafe(|| {
@@ -46,6 +52,11 @@ pub unsafe extern "C" fn fs_engine_create(out_engine: *mut *mut fs_engine) -> i3
     .unwrap_or(FS_ERR_PANIC)
 }
 
+/// Destroys an engine previously created by [`fs_engine_create`].
+///
+/// # Safety
+/// `engine` must be null or a live handle returned by [`fs_engine_create`] that has
+/// not already been destroyed. After this call, a non-null handle must not be used.
 #[no_mangle]
 pub unsafe extern "C" fn fs_engine_destroy(engine: *mut fs_engine) {
     let _ = catch_unwind(AssertUnwindSafe(|| {
@@ -57,6 +68,15 @@ pub unsafe extern "C" fn fs_engine_destroy(engine: *mut fs_engine) {
     }));
 }
 
+/// Extracts an anonymous signal template from one or more channel frames.
+///
+/// # Safety
+/// `engine` must be a live engine handle. `channels` must point to an array of at
+/// least `channel_count` initialized [`fs_channel_frame`] values. For every frame,
+/// `samples` must point to at least `sample_count` readable `f32` values for the
+/// duration of this call. `out_template` must be writable storage for one template
+/// handle. A successful non-null template must later be released exactly once with
+/// [`fs_template_destroy`] or [`fs_template_free_and_null`].
 #[no_mangle]
 pub unsafe extern "C" fn fs_engine_extract_template(
     engine: *mut fs_engine,
@@ -82,7 +102,8 @@ pub unsafe extern "C" fn fs_engine_extract_template(
             {
                 return FS_ERR_INPUT;
             }
-            let samples = unsafe { std::slice::from_raw_parts(channel.samples, channel.sample_count) }.to_vec();
+            let samples =
+                unsafe { std::slice::from_raw_parts(channel.samples, channel.sample_count) }.to_vec();
             frames.push(SensorFrame {
                 sensor_id: format!("ffi-channel-{index}"),
                 source_kind: SourceKind::Other,
@@ -94,7 +115,11 @@ pub unsafe extern "C" fn fs_engine_extract_template(
         }
 
         let start_ns = frames.iter().map(|f| f.timestamp_ns).min().unwrap_or(0);
-        let end_ns = frames.iter().map(|f| f.timestamp_ns).max().unwrap_or(start_ns);
+        let end_ns = frames
+            .iter()
+            .map(|f| f.timestamp_ns)
+            .max()
+            .unwrap_or(start_ns);
         let window = ObservationWindow::new(start_ns, end_ns, frames);
         let extractor = unsafe { &(*engine).extractor };
         let template = match extractor.extract(&window) {
@@ -109,6 +134,11 @@ pub unsafe extern "C" fn fs_engine_extract_template(
     .unwrap_or(FS_ERR_PANIC)
 }
 
+/// Destroys a template previously returned by [`fs_engine_extract_template`].
+///
+/// # Safety
+/// `value` must be null or a live template handle returned by this library that has
+/// not already been destroyed. After this call, a non-null handle must not be used.
 #[no_mangle]
 pub unsafe extern "C" fn fs_template_destroy(value: *mut fs_template) {
     let _ = catch_unwind(AssertUnwindSafe(|| {
@@ -120,6 +150,11 @@ pub unsafe extern "C" fn fs_template_destroy(value: *mut fs_template) {
     }));
 }
 
+/// Reads the bounded quality score from a template.
+///
+/// # Safety
+/// `value` must point to a live template and `out_quality` must point to writable
+/// storage for one `f32`. Both pointers must remain valid for the duration of the call.
 #[no_mangle]
 pub unsafe extern "C" fn fs_template_quality(value: *const fs_template, out_quality: *mut f32) -> i32 {
     catch_unwind(AssertUnwindSafe(|| {
@@ -134,6 +169,12 @@ pub unsafe extern "C" fn fs_template_quality(value: *const fs_template, out_qual
     .unwrap_or(FS_ERR_PANIC)
 }
 
+/// Reads the bounded uncertainty score from a template.
+///
+/// # Safety
+/// `value` must point to a live template and `out_uncertainty` must point to
+/// writable storage for one `f32`. Both pointers must remain valid for the duration
+/// of the call.
 #[no_mangle]
 pub unsafe extern "C" fn fs_template_uncertainty(
     value: *const fs_template,
@@ -151,6 +192,11 @@ pub unsafe extern "C" fn fs_template_uncertainty(
     .unwrap_or(FS_ERR_PANIC)
 }
 
+/// Destroys a template handle and writes null back to the caller's handle slot.
+///
+/// # Safety
+/// `value` must be null or point to writable storage containing either null or a
+/// live template handle returned by this library that has not already been destroyed.
 #[no_mangle]
 pub unsafe extern "C" fn fs_template_free_and_null(value: *mut *mut fs_template) -> i32 {
     catch_unwind(AssertUnwindSafe(|| {
@@ -203,7 +249,10 @@ mod tests {
         let mut template: *mut fs_template = ptr::null_mut();
         unsafe {
             assert_eq!(fs_engine_create(&mut engine), FS_OK);
-            assert_eq!(fs_engine_extract_template(engine, &frame, 1, &mut template), FS_OK);
+            assert_eq!(
+                fs_engine_extract_template(engine, &frame, 1, &mut template),
+                FS_OK
+            );
             let mut quality = -1.0;
             assert_eq!(fs_template_quality(template, &mut quality), FS_OK);
             assert!((0.0..=1.0).contains(&quality));
