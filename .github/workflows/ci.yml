@@ -11,13 +11,18 @@ permissions:
   contents: read
 
 jobs:
+  runner-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify runner starts
+        run: echo "GitHub Actions runner started"
+
   rust:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: '1.80.1'
           components: rustfmt
       - name: Format
         run: cargo fmt --all -- --check
@@ -31,22 +36,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: '1.80.1'
       - name: Native tool versions
         run: |
+          rustc --version
+          cargo --version
           cmake --version
           c++ --version
-      - name: Build C++ SDK when present
-        shell: bash
+      - name: Build C++ SDK
         run: |
-          if [ -f CMakeLists.txt ]; then
-            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-            cmake --build build --parallel 2
-            ctest --test-dir build --output-on-failure
-          else
-            echo 'CMake SDK not added yet; Rust job is authoritative for this RED phase.'
-          fi
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --parallel 2
+          ctest --test-dir build --output-on-failure
 
   hygiene:
     runs-on: ubuntu-latest
