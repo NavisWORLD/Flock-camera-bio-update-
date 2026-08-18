@@ -9,4 +9,9 @@ license.workspace = true
 axum.workspace = true
 tokio.workspace = true
 serde.workspace = true
+serde_json.workspace = true
 uuid.workspace = true
+signal-core = { path = "../../rust/signal-core" }
+signal-features = { path = "../../rust/signal-features" }
+flock-adapter = { path = "../../rust/flock-adapter" }
+policy-engine = { path = "../../rust/policy-engine" }
