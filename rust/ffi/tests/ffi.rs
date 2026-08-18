@@ -37,7 +37,7 @@ fn engine_lifecycle_and_extraction_work() {
 }
 
 #[test]
-fn extraction_rejects_nonempty_channel_with_null_samples() {
+fn extraction_rejects_nonempty_channel_with_null_samples_and_clears_output() {
     let mut engine: *mut fs_engine = ptr::null_mut();
     assert_eq!(unsafe { fs_engine_create(&mut engine) }, FS_OK);
     let frame = fs_channel_frame {
@@ -46,10 +46,11 @@ fn extraction_rejects_nonempty_channel_with_null_samples() {
         sample_rate_hz: 4.0,
         timestamp_ns: 42,
     };
-    let mut template: *mut fs_template = ptr::null_mut();
+    let mut template = 1usize as *mut fs_template;
     assert_eq!(
         unsafe { fs_engine_extract_template(engine, &frame, 1, &mut template) },
         FS_ERR_INVALID
     );
+    assert!(template.is_null());
     unsafe { fs_engine_destroy(engine) };
 }
