@@ -5,6 +5,7 @@ members = [
     "rust/signal-features",
     "rust/policy-engine",
     "rust/signal-ledger",
+    "rust/ffi",
 ]
 
 [workspace.package]
