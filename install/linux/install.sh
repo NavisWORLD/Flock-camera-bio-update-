@@ -4,6 +4,7 @@ set -euo pipefail
 PREFIX="${FLOCK_SIGNAL_PREFIX:-/opt/flock-signal}"
 BIN_DIR="${PREFIX}/bin"
 ENV_DIR="${PREFIX}/etc"
+SERVICE_USER="flocksignal"
 
 command -v cargo >/dev/null 2>&1 || { echo "cargo is required" >&2; exit 1; }
 command -v cmake >/dev/null 2>&1 || { echo "cmake is required" >&2; exit 1; }
@@ -16,15 +17,30 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel 2
 ctest --test-dir build --output-on-failure
 
-sudo install -d -m 0755 "$BIN_DIR" "$ENV_DIR"
-sudo install -m 0755 target/release/flock-signal-gateway "$BIN_DIR/flock-signal-gateway"
-
-if [[ ! -f "$ENV_DIR/flock-signal.env" ]]; then
-  sudo sh -c "umask 077; printf '%s\n' 'FLOCK_SIGNAL_API_TOKEN=REPLACE_ME' 'FLOCK_SIGNAL_BIND=127.0.0.1:8080' > '$ENV_DIR/flock-signal.env'"
-  echo "Created $ENV_DIR/flock-signal.env. Replace REPLACE_ME before starting the service."
+if ! id -u "$SERVICE_USER" >/dev/null 2>&1; then
+  sudo useradd --system --user-group --home-dir "$PREFIX" --shell /usr/sbin/nologin "$SERVICE_USER"
 fi
 
-sudo install -m 0644 install/linux/flock-signal-gateway.service /etc/systemd/system/flock-signal-gateway.service
+sudo install -d -o root -g "$SERVICE_USER" -m 0755 "$PREFIX" "$BIN_DIR"
+sudo install -d -o root -g "$SERVICE_USER" -m 0750 "$ENV_DIR"
+sudo install -o root -g root -m 0755 target/release/flock-signal-gateway "$BIN_DIR/flock-signal-gateway"
+
+if [[ ! -f "$ENV_DIR/flock-signal.env" ]]; then
+  tmp_env="$(mktemp)"
+  trap 'rm -f "$tmp_env"' EXIT
+  printf '%s\n' \
+    'FLOCK_SIGNAL_API_TOKEN=REPLACE_ME' \
+    'FLOCK_SIGNAL_BIND=127.0.0.1:8080' > "$tmp_env"
+  sudo install -o root -g "$SERVICE_USER" -m 0640 "$tmp_env" "$ENV_DIR/flock-signal.env"
+  rm -f "$tmp_env"
+  trap - EXIT
+  echo "Created $ENV_DIR/flock-signal.env. Replace REPLACE_ME before starting the service."
+else
+  sudo chown root:"$SERVICE_USER" "$ENV_DIR/flock-signal.env"
+  sudo chmod 0640 "$ENV_DIR/flock-signal.env"
+fi
+
+sudo install -o root -g root -m 0644 install/linux/flock-signal-gateway.service /etc/systemd/system/flock-signal-gateway.service
 
 echo "Installed to $PREFIX. Configure $ENV_DIR/flock-signal.env, then run:"
 echo "  sudo systemctl daemon-reload"
