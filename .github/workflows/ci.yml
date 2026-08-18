@@ -8,6 +8,14 @@ on:
       - feature/flock-signal-platform
 
 jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirm runner starts
+        run: |
+          echo "runner-started"
+          uname -a
+
   rust:
     runs-on: ubuntu-latest
     steps:
