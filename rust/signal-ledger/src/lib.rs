@@ -188,7 +188,11 @@ mod tests {
             policy_context: LedgerPolicyContext::default(),
         });
         assert!(verify_chain(&[first.clone()], &signer.verifying_key()).is_ok());
-        assert!(verify_chain_with_public_key_bytes(&[first.clone()], &signer.verifying_key_bytes()).is_ok());
+        assert!(verify_chain_with_public_key_bytes(
+            &[first.clone()],
+            &signer.verifying_key_bytes()
+        )
+        .is_ok());
 
         let mut tampered = first;
         tampered.payload_digest = [9_u8; 32];
@@ -231,8 +235,7 @@ mod tests {
             previous_record_digest: [0_u8; 32],
             policy_context: LedgerPolicyContext::default(),
         });
-        let mut invalid = [0_u8; 32];
-        invalid[0] = 0xff;
+        let invalid = [0xff_u8; 32];
         let result = verify_chain_with_public_key_bytes(&[record], &invalid);
         assert!(result.is_err());
     }
