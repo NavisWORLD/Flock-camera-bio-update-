@@ -6,11 +6,12 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use event_correlator::Correlator;
 use flock_adapter::FlockAdapter;
 use policy_engine::{PolicyAction, PolicyContext, PolicyDecision, PolicyEngine};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use signal_core::{CameraEvent, ObservationWindow, SignalTemplate};
+use signal_core::{CameraEvent, ObservationWindow, SafetyEvent, SignalTemplate};
 use signal_features::FeatureExtractor;
 use std::collections::BTreeMap;
 use uuid::Uuid;
@@ -59,6 +60,13 @@ pub struct PolicyRequest {
     pub context: PolicyContext,
 }
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct CorrelationRequest {
+    pub camera_event: CameraEvent,
+    pub observation_window: ObservationWindow,
+    pub signal_template: SignalTemplate,
+}
+
 pub fn health_payload() -> HealthPayload {
     HealthPayload {
         status: "ok",
@@ -88,8 +96,28 @@ async fn evaluate_policy(Json(request): Json<PolicyRequest>) -> Json<PolicyDecis
     Json(PolicyEngine.evaluate(request.action, &request.context))
 }
 
+async fn correlate(Json(request): Json<CorrelationRequest>) -> ApiResult<SafetyEvent> {
+    Correlator::default()
+        .correlate(
+            &request.camera_event,
+            &request.observation_window,
+            &request.signal_template,
+        )
+        .map(Json)
+        .ok_or_else(|| unprocessable("camera event and observation did not satisfy time/zone correlation"))
+}
+
 fn bad_request(message: String) -> (StatusCode, Json<ApiError>) {
     (StatusCode::BAD_REQUEST, Json(ApiError { error: message }))
+}
+
+fn unprocessable(message: impl Into<String>) -> (StatusCode, Json<ApiError>) {
+    (
+        StatusCode::UNPROCESSABLE_ENTITY,
+        Json(ApiError {
+            error: message.into(),
+        }),
+    )
 }
 
 fn internal_error(error: serde_json::Error) -> (StatusCode, Json<ApiError>) {
@@ -120,6 +148,7 @@ pub fn app() -> Router {
         .route("/v1/camera/normalize", post(normalize_camera))
         .route("/v1/signal/extract", post(extract_signal))
         .route("/v1/policy/evaluate", post(evaluate_policy))
+        .route("/v1/correlate", post(correlate))
         .layer(middleware::from_fn(request_id))
 }
 
