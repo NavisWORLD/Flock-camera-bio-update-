@@ -1,3 +1,6 @@
+mod auth;
+
+use auth::{require_api_key, AuthConfig};
 use axum::{
     extract::Request,
     http::{HeaderName, HeaderValue, StatusCode},
@@ -20,6 +23,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AppConfig {
     pub bind: String,
+    pub api_key: Option<String>,
 }
 
 impl AppConfig {
@@ -30,13 +34,19 @@ impl AppConfig {
                 .cloned()
                 .filter(|value| !value.trim().is_empty())
                 .unwrap_or_else(|| "0.0.0.0:8080".into()),
+            api_key: values
+                .get("FLOCK_SIGNAL_API_KEY")
+                .cloned()
+                .filter(|value| !value.trim().is_empty()),
         }
     }
 
     pub fn from_env() -> Self {
         let mut values = BTreeMap::new();
-        if let Ok(value) = std::env::var("FLOCK_SIGNAL_BIND") {
-            values.insert("FLOCK_SIGNAL_BIND".into(), value);
+        for name in ["FLOCK_SIGNAL_BIND", "FLOCK_SIGNAL_API_KEY"] {
+            if let Ok(value) = std::env::var(name) {
+                values.insert(name.to_string(), value);
+            }
         }
         Self::from_map(&values)
     }
@@ -167,15 +177,22 @@ async fn request_id(mut request: Request, next: Next) -> Response {
     response
 }
 
-pub fn app() -> Router {
-    Router::new()
-        .route("/healthz", get(health))
-        .route("/readyz", get(health))
+pub fn app(api_key: Option<String>) -> Router {
+    let protected = Router::new()
         .route("/v1/camera/normalize", post(normalize_camera))
         .route("/v1/signal/extract", post(extract_signal))
         .route("/v1/policy/evaluate", post(evaluate_policy))
         .route("/v1/correlate", post(correlate))
         .route("/v1/evidence/verify", post(verify_evidence))
+        .layer(middleware::from_fn_with_state(
+            AuthConfig::new(api_key),
+            require_api_key,
+        ));
+
+    Router::new()
+        .route("/healthz", get(health))
+        .route("/readyz", get(health))
+        .merge(protected)
         .layer(middleware::from_fn(request_id))
 }
 
@@ -184,17 +201,20 @@ mod tests {
     use super::*;
 
     #[test]
-    fn default_bind_is_stable() {
+    fn default_bind_is_stable_and_api_key_is_absent() {
         let config = AppConfig::from_map(&BTreeMap::new());
         assert_eq!(config.bind, "0.0.0.0:8080");
+        assert_eq!(config.api_key, None);
     }
 
     #[test]
-    fn explicit_bind_overrides_default() {
+    fn explicit_bind_and_api_key_override_defaults() {
         let mut values = BTreeMap::new();
         values.insert("FLOCK_SIGNAL_BIND".into(), "127.0.0.1:9090".into());
+        values.insert("FLOCK_SIGNAL_API_KEY".into(), "test-secret".into());
         let config = AppConfig::from_map(&values);
         assert_eq!(config.bind, "127.0.0.1:9090");
+        assert_eq!(config.api_key.as_deref(), Some("test-secret"));
     }
 
     #[test]
