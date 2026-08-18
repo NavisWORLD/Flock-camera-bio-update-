@@ -2,14 +2,26 @@
 
 Base URL in the default configuration: `http://HOST:8080`.
 
-All routes are part of the anonymous production pipeline. There is no production person-identity lookup endpoint.
+There is no production person-identity lookup endpoint.
+
+## Authentication
+
+`GET /healthz` and `GET /readyz` are public health endpoints.
+
+Every `/v1/*` route requires:
+
+```text
+Authorization: Bearer <FLOCK_SIGNAL_API_KEY>
+```
+
+If `FLOCK_SIGNAL_API_KEY` is not configured, all `/v1/*` requests are denied. Configure the secret outside source control through the deployment environment or secret manager.
+
+The gateway also adds an `x-request-id` response header for request correlation.
 
 ## Health
 
 ### `GET /healthz`
 ### `GET /readyz`
-
-Response:
 
 ```json
 {
@@ -18,13 +30,9 @@ Response:
 }
 ```
 
-The gateway adds an `x-request-id` response header for request correlation.
-
 ## Normalize an authorized camera event
 
 ### `POST /v1/camera/normalize`
-
-Example request:
 
 ```json
 {
@@ -54,8 +62,6 @@ The response contains no name, government ID, face embedding, or production pers
 ## Evaluate policy
 
 ### `POST /v1/policy/evaluate`
-
-Example:
 
 ```json
 {
@@ -90,7 +96,7 @@ The correlator requires compatible time and zone context. The response is a `Saf
 
 ### `POST /v1/evidence/verify`
 
-Example shape:
+Example request shape:
 
 ```json
 {
@@ -114,7 +120,9 @@ Verification checks record ordering, previous-record hashes, deterministic recor
 
 ## Error behavior
 
-Malformed inputs return `400 Bad Request`. A validly formed request that fails correlation or evidence verification returns `422 Unprocessable Entity` with a JSON `error` field.
+- Missing or invalid bearer key: `401 Unauthorized`.
+- Malformed input: `400 Bad Request`.
+- Valid input that fails correlation or evidence verification: `422 Unprocessable Entity`.
 
 ## Provider authorization
 
