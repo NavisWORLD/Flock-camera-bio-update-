@@ -15,6 +15,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  slim-probe:
+    runs-on: ubuntu-slim
+    steps:
+      - name: Confirm container runner starts
+        run: |
+          echo "slim-runner-started"
+          uname -a
+
   linux:
     runs-on: ubuntu-latest
     steps:
