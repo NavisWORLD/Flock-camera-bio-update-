@@ -5,50 +5,15 @@ on:
   push:
     branches:
       - main
-      - feature/flock-signal-platform
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  normalize:
-    if: github.event_name == 'pull_request' && github.actor != 'github-actions[bot]'
-    runs-on: ubuntu-latest
-    env:
-      CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: fallback
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
-      - uses: dtolnay/rust-toolchain@1.84.0
-        with:
-          components: rustfmt
-      - name: Normalize Rust and lockfile
-        run: |
-          cargo fmt --all
-          cargo generate-lockfile
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Cargo.lock rust services
-          if git diff --cached --quiet; then
-            echo "No normalization changes"
-            exit 0
-          fi
-          git commit -m "build: normalize Rust and commit compatible lockfile"
-          git push origin HEAD:${{ github.head_ref }}
-
-  slim-probe:
-    runs-on: ubuntu-slim
-    steps:
-      - name: Confirm container runner starts
-        run: |
-          echo "slim-runner-started"
-          uname -a
-
   linux:
     runs-on: ubuntu-latest
     steps:
