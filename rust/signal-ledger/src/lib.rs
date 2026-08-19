@@ -167,7 +167,8 @@ pub fn verify_chain(records: &[LedgerRecord], key: &VerifyingKey) -> Result<(), 
 }
 
 fn hash_payload(payload: &RecordSigningPayload<'_>) -> [u8; 32] {
-    let bytes = serde_json::to_vec(payload).expect("ledger signing payload serialization is infallible");
+    let bytes =
+        serde_json::to_vec(payload).expect("ledger signing payload serialization is infallible");
     Sha256::digest(bytes).into()
 }
 

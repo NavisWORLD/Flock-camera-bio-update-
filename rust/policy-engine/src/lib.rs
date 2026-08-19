@@ -36,14 +36,14 @@ pub struct PolicyEngine;
 impl PolicyEngine {
     pub fn evaluate(&self, action: PolicyAction, context: &PolicyContext) -> PolicyDecision {
         match action {
-            PolicyAction::AnonymousObservation | PolicyAction::EventCorrelation | PolicyAction::RetentionExpiry => {
-                PolicyDecision {
-                    allowed: true,
-                    elevated: false,
-                    requires_human_review: false,
-                    reasons: vec!["production-anonymous-path".into()],
-                }
-            }
+            PolicyAction::AnonymousObservation
+            | PolicyAction::EventCorrelation
+            | PolicyAction::RetentionExpiry => PolicyDecision {
+                allowed: true,
+                elevated: false,
+                requires_human_review: false,
+                reasons: vec!["production-anonymous-path".into()],
+            },
             PolicyAction::EvidenceExport => PolicyDecision {
                 allowed: context.export_authorized,
                 elevated: false,
@@ -59,12 +59,14 @@ impl PolicyEngine {
                 allowed: context.research_authorized && context.authorization_ref.is_some(),
                 elevated: false,
                 requires_human_review: true,
-                reasons: vec![if context.research_authorized && context.authorization_ref.is_some() {
-                    "explicit-research-authorization"
-                } else {
-                    "research-deny-by-default"
-                }
-                .into()],
+                reasons: vec![
+                    if context.research_authorized && context.authorization_ref.is_some() {
+                        "explicit-research-authorization"
+                    } else {
+                        "research-deny-by-default"
+                    }
+                    .into(),
+                ],
             },
             PolicyAction::RestrictedZoneReview => {
                 let contextual_elevation = context.restricted_zone
@@ -134,6 +136,10 @@ mod tests {
             authorization_ref: Some("IRB-OR-AGENCY-CASE-001".into()),
             ..PolicyContext::default()
         };
-        assert!(engine.evaluate(PolicyAction::ResearchRoute, &context).allowed);
+        assert!(
+            engine
+                .evaluate(PolicyAction::ResearchRoute, &context)
+                .allowed
+        );
     }
 }

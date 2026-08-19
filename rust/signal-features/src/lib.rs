@@ -49,7 +49,8 @@ impl FeatureExtractor {
         let centered = clean.iter().map(|v| *v - mean).collect::<Vec<_>>();
         let rms = (centered.iter().map(|v| v * v).sum::<f32>() / centered.len() as f32).sqrt();
         let zcr = zero_crossing_rate(&centered);
-        let (centroid_hz, low_energy, mid_energy, high_energy) = spectral_summary(&centered, sample_rate as f32);
+        let (centroid_hz, low_energy, mid_energy, high_energy) =
+            spectral_summary(&centered, sample_rate as f32);
 
         let serialized = serde_json::to_vec(window).map_err(|_| FeatureError::Serialization)?;
         let digest: [u8; 32] = Sha256::digest(serialized).into();
@@ -138,7 +139,12 @@ fn spectral_summary(samples: &[f32], sample_rate_hz: f32) -> (f32, f32, f32, f32
         0.0
     };
     let total_energy = (low + mid + high).max(f32::EPSILON);
-    (centroid, low / total_energy, mid / total_energy, high / total_energy)
+    (
+        centroid,
+        low / total_energy,
+        mid / total_energy,
+        high / total_energy,
+    )
 }
 
 #[cfg(test)]
@@ -169,23 +175,35 @@ mod tests {
     #[test]
     fn extracts_stable_features_for_known_sine_wave() {
         let window = sine_window();
-        let a = FeatureExtractor::default().extract(&window).expect("extract");
-        let b = FeatureExtractor::default().extract(&window).expect("extract");
+        let a = FeatureExtractor::default()
+            .extract(&window)
+            .expect("extract");
+        let b = FeatureExtractor::default()
+            .extract(&window)
+            .expect("extract");
         assert_eq!(a.feature_schema, "flock-signal-basic-v1");
         assert_eq!(a.features, b.features);
         assert_eq!(a.source_digest, b.source_digest);
-        assert!((a.features[2] - 8.0).abs() < 0.75, "centroid should be near 8 Hz");
+        assert!(
+            (a.features[2] - 8.0).abs() < 0.75,
+            "centroid should be near 8 Hz"
+        );
     }
 
     #[test]
     fn rejects_empty_observation_windows() {
         let window = ObservationWindow::new(0, 1, Vec::new());
-        assert!(matches!(FeatureExtractor::default().extract(&window), Err(FeatureError::NoSamples)));
+        assert!(matches!(
+            FeatureExtractor::default().extract(&window),
+            Err(FeatureError::NoSamples)
+        ));
     }
 
     #[test]
     fn quality_and_uncertainty_are_bounded() {
-        let template = FeatureExtractor::default().extract(&sine_window()).expect("extract");
+        let template = FeatureExtractor::default()
+            .extract(&sine_window())
+            .expect("extract");
         assert!((0.0..=1.0).contains(&template.quality));
         assert!((0.0..=1.0).contains(&template.uncertainty));
     }

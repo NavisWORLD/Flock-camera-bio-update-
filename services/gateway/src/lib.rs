@@ -127,7 +127,9 @@ async fn correlate(Json(request): Json<CorrelationRequest>) -> ApiResult<SafetyE
             &request.signal_template,
         )
         .map(Json)
-        .ok_or_else(|| unprocessable("camera event and observation did not satisfy time/zone correlation"))
+        .ok_or_else(|| {
+            unprocessable("camera event and observation did not satisfy time/zone correlation")
+        })
 }
 
 async fn verify_evidence(

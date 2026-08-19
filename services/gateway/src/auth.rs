@@ -83,13 +83,19 @@ mod tests {
 
     #[test]
     fn correct_bearer_key_is_accepted() {
-        assert!(bearer_matches(Some("Bearer secret-value"), Some("secret-value")));
+        assert!(bearer_matches(
+            Some("Bearer secret-value"),
+            Some("secret-value")
+        ));
     }
 
     #[test]
     fn wrong_or_malformed_bearer_key_is_rejected() {
         assert!(!bearer_matches(Some("Bearer wrong"), Some("secret-value")));
-        assert!(!bearer_matches(Some("Basic secret-value"), Some("secret-value")));
+        assert!(!bearer_matches(
+            Some("Basic secret-value"),
+            Some("secret-value")
+        ));
         assert!(!bearer_matches(None, Some("secret-value")));
     }
 }

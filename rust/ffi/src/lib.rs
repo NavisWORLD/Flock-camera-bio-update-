@@ -103,7 +103,8 @@ pub unsafe extern "C" fn fs_engine_extract_template(
                 return FS_ERR_INPUT;
             }
             let samples =
-                unsafe { std::slice::from_raw_parts(channel.samples, channel.sample_count) }.to_vec();
+                unsafe { std::slice::from_raw_parts(channel.samples, channel.sample_count) }
+                    .to_vec();
             frames.push(SensorFrame {
                 sensor_id: format!("ffi-channel-{index}"),
                 source_kind: SourceKind::Other,
@@ -156,7 +157,10 @@ pub unsafe extern "C" fn fs_template_destroy(value: *mut fs_template) {
 /// `value` must point to a live template and `out_quality` must point to writable
 /// storage for one `f32`. Both pointers must remain valid for the duration of the call.
 #[no_mangle]
-pub unsafe extern "C" fn fs_template_quality(value: *const fs_template, out_quality: *mut f32) -> i32 {
+pub unsafe extern "C" fn fs_template_quality(
+    value: *const fs_template,
+    out_quality: *mut f32,
+) -> i32 {
     catch_unwind(AssertUnwindSafe(|| {
         if value.is_null() || out_quality.is_null() {
             return FS_ERR_NULL;

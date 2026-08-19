@@ -76,7 +76,10 @@ mod tests {
         let event = FlockAdapter::normalize_json(json).expect("normalize");
         assert_eq!(event.camera_id, "flock-sim-17");
         assert_eq!(event.zone_id.as_deref(), Some("school-north"));
-        assert_eq!(event.attributes.get("face_occlusion").map(String::as_str), Some("present"));
+        assert_eq!(
+            event.attributes.get("face_occlusion").map(String::as_str),
+            Some("present")
+        );
     }
 
     #[test]
@@ -88,7 +91,10 @@ mod tests {
             "attributes":{"face_occlusion":"maybe-person"}
         }"#;
         let event = FlockAdapter::normalize_json(json).expect("normalize");
-        assert_eq!(event.attributes.get("face_occlusion").map(String::as_str), Some("unknown"));
+        assert_eq!(
+            event.attributes.get("face_occlusion").map(String::as_str),
+            Some("unknown")
+        );
     }
 
     #[test]

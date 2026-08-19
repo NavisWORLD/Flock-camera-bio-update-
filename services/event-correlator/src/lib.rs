@@ -107,14 +107,7 @@ mod tests {
     }
 
     fn template() -> SignalTemplate {
-        SignalTemplate::new(
-            "schema".into(),
-            "1".into(),
-            vec![0.2],
-            1.0,
-            0.0,
-            [1; 32],
-        )
+        SignalTemplate::new("schema".into(), "1".into(), vec![0.2], 1.0, 0.0, [1; 32])
     }
 
     #[test]
