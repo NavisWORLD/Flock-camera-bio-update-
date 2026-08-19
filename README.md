@@ -23,7 +23,7 @@ The shipping architecture intentionally separates observation, representation, e
 | Docker/Linux/Windows packaging | Implemented | Evaluation/deployment assets |
 | Security/compliance package | Implemented | Threat model, controls, retention, privacy-impact and procurement templates |
 | Future regulated identity pathway | Interface/docs only | Research extension point; no shipping population-identity engine |
-| CI | Defined; external runner blocked | GitHub jobs currently fail before step 1 on this private repository |
+| CI | Verified on Linux + Windows | Rust 1.82, strict Clippy, tests, release builds, C++ interoperability, packaged artifacts |
 
 ## Safety and scientific boundary
 
@@ -158,13 +158,13 @@ The canonical Linux verification command is:
 bash scripts/verify.sh
 ```
 
-It runs:
+It runs the locked dependency graph through:
 
 ```bash
 cargo fmt --all --check
-cargo clippy --workspace --all-targets -- -D warnings
-cargo test --workspace --all-targets
-cargo build --workspace --release
+cargo clippy --locked --workspace --all-targets -- -D warnings
+cargo test --locked --workspace --all-targets
+cargo build --locked --workspace --release
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release
 ctest --test-dir build --output-on-failure
@@ -178,13 +178,19 @@ Windows equivalent:
 
 ### Current verification status
 
-The C++20 SDK/smoke sources have been syntax-checked locally with strict warnings. Rust verification remains externally blocked in this session because:
+Cross-platform release verification is complete for the Rust 1.82 / C++20 implementation.
 
-- the available local container has no Rust toolchain and cannot reach external package/toolchain hosts;
-- Hugging Face Jobs returned `402 Payment Required` for the independent compute fallback;
-- GitHub Actions Linux and Windows jobs repeatedly complete with **zero executed steps**, including a runner-only diagnostic and reruns.
+Verified CI run `32201084255` on release-hardening head `93a61a4fb82d716013d89d2c072f6eadfe9b9d41` completed successfully on both operating systems before squash merge into `main`:
 
-Accordingly, this branch must **not** be represented as Rust-build-verified until the canonical verification script executes successfully on a real Rust runner.
+- Linux: Rustfmt, Clippy with `-D warnings`, all Rust tests, locked release build, CMake/C++ build, Rust↔C++ CTest smoke test, packaging, artifact upload.
+- Windows: Rustfmt, Clippy, all Rust tests, locked optimized Rust release build, CMake configure, MSVC C++ interoperability build, CTest smoke test, packaging, artifact upload.
+
+Produced evaluation artifacts:
+
+- `flock-signal-linux-x86_64` — SHA-256 `c01498f29e9a0e5c2c7f8d2b662e4ac824038ce992905b060b980396871321c6`
+- `flock-signal-windows-x86_64` — SHA-256 `8f9a8b02617c08f4c79548ddc2e3631672f72e16f9b65baa11d526d38eee9382`
+
+Build verification does **not** imply Flock Safety certification, government authorization, evidentiary admissibility, or scientific validation of a remote person-unique physiological/magnetic identifier.
 
 ## C++20 integration
 
