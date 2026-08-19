@@ -14,21 +14,40 @@ Prepare the repository for technical evaluation by U.S. public-safety, school-sa
 - provider-neutral Flock-compatible adapter boundary and synthetic fixture;
 - C ABI and C++20 SDK;
 - PostgreSQL schema;
-- health/readiness gateway skeleton;
+- authenticated health/readiness and processing gateway;
 - Docker, Linux, and Windows installation assets;
 - threat model;
 - privacy impact template;
 - scientific claims register;
 - regulated research pathway documentation;
-- automated Rust/C++ CI definition.
+- committed Rust dependency lockfile;
+- automated Linux/Windows Rust+C++ CI;
+- verified Linux and Windows evaluation artifacts.
 
-## Must be completed before a production procurement claim
+## Verified engineering evidence
 
-- successful clean CI build and test evidence;
-- generated dependency lockfile from the verified build;
-- software bill of materials from the verified dependency graph;
-- vulnerability scan results;
-- signed release artifacts and release provenance;
+Release-hardening CI run `32201084255` completed successfully on both Linux and Windows using Rust 1.82 and the committed lockfile.
+
+The verification gate covered:
+
+- Rustfmt;
+- Clippy with `-D warnings`;
+- all Rust tests;
+- locked optimized release builds;
+- CMake configure/build;
+- Rust↔C++ interoperability smoke testing;
+- Linux/Windows artifact packaging and upload.
+
+Verified evaluation-artifact digests:
+
+- Linux SHA-256: `c01498f29e9a0e5c2c7f8d2b662e4ac824038ce992905b060b980396871321c6`
+- Windows SHA-256: `8f9a8b02617c08f4c79548ddc2e3631672f72e16f9b65baa11d526d38eee9382`
+
+## Must still be completed before a production procurement claim
+
+- software bill of materials suitable for the target procurement process;
+- vulnerability scan results and remediation record;
+- signed production release artifacts and release provenance;
 - deployment-specific penetration/security assessment;
 - production Flock/API credentials and contract-authorized integration testing where applicable;
 - deploying-agency privacy/legal/civil-rights review;
@@ -44,8 +63,8 @@ Frequency-domain signal analysis is implemented as a mathematical/software capab
 
 ## External dependency status
 
-This repository does not represent itself as endorsed by Flock Safety or any U.S. government agency. An operational integration requires authorized provider/API access and whatever contractual or government approvals apply to the actual deployment.
+This repository does not represent itself as endorsed by Flock Safety or any U.S. government agency. An operational integration requires authorized provider/API access and whatever contractual, legal, security, privacy, records-management, and government approvals apply to the actual deployment.
 
-## Current CI caveat
+## CI status
 
-During the initial build session, GitHub Actions jobs for this private repository failed before the first runner step, including a runner-only diagnostic job. That is an external runner/repository Actions issue rather than a demonstrated test failure in the source code. The repository must not be labeled build-verified until a runner executes the defined tests successfully.
+The earlier GitHub Actions runner-allocation problem is resolved. Cross-platform repository verification now executes successfully on Linux and Windows. This establishes build/test evidence for the repository; it does **not** establish Flock Safety certification, government authorization, evidentiary admissibility, procurement approval, or scientific validation of a remote person-unique magnetic/physiological identifier.
