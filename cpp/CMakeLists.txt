@@ -35,8 +35,19 @@ add_dependencies(flock_signal_cpp signal_ffi_rust)
 add_executable(flock_signal_cpp_smoke tests/smoke.cpp)
 target_compile_features(flock_signal_cpp_smoke PRIVATE cxx_std_20)
 target_link_libraries(flock_signal_cpp_smoke PRIVATE flock_signal_cpp)
-if(APPLE OR UNIX)
+
+if(WIN32)
+    add_custom_command(
+        TARGET flock_signal_cpp_smoke
+        POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+                "${RUST_SHARED_LIB}"
+                "$<TARGET_FILE_DIR:flock_signal_cpp_smoke>"
+        COMMENT "Staging Rust signal_ffi DLL beside Windows smoke test"
+    )
+elseif(APPLE OR UNIX)
     set_target_properties(flock_signal_cpp_smoke PROPERTIES BUILD_RPATH "${RUST_TARGET_DIR}")
 endif()
 
 add_test(NAME flock_signal_cpp_smoke COMMAND flock_signal_cpp_smoke)
+set_tests_properties(flock_signal_cpp_smoke PROPERTIES TIMEOUT 30)
