@@ -1,6 +1,7 @@
 #include "flock_signal/flock_signal.hpp"
 
 #include <stdexcept>
+#include <string>
 #include <utility>
 
 namespace flock_signal {
