@@ -8,9 +8,9 @@ command -v cargo >/dev/null || { echo "cargo is required" >&2; exit 2; }
 command -v cmake >/dev/null || { echo "cmake is required" >&2; exit 2; }
 
 cargo fmt --all --check
-cargo clippy --workspace --all-targets -- -D warnings
-cargo test --workspace --all-targets
-cargo build --workspace --release
+cargo clippy --locked --workspace --all-targets -- -D warnings
+cargo test --locked --workspace --all-targets
+cargo build --locked --workspace --release
 
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release

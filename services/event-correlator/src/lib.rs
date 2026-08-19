@@ -55,23 +55,32 @@ impl Correlator {
 }
 
 fn attribute_flag(event: &CameraEvent, key: &str) -> bool {
-    event
-        .attributes
-        .get(key)
-        .map(|value| matches!(value.trim().to_ascii_lowercase().as_str(), "true" | "yes" | "1" | "present"))
-        .unwrap_or(false)
+    event.attributes.get(key).is_some_and(|value| {
+        matches!(
+            value.trim().to_ascii_lowercase().as_str(),
+            "true" | "yes" | "1" | "present"
+        )
+    })
 }
 
 fn zone_matches(event: &CameraEvent, window: &ObservationWindow) -> bool {
     let Some(event_zone) = event.zone_id.as_deref() else {
         return true;
     };
-    let sensor_zones = window
+
+    let mut saw_sensor_zone = false;
+    for sensor_zone in window
         .frames
         .iter()
         .filter_map(|frame| frame.metadata.get("zone_id"))
-        .collect::<Vec<_>>();
-    sensor_zones.is_empty() || sensor_zones.iter().any(|zone| zone.as_str() == event_zone)
+    {
+        saw_sensor_zone = true;
+        if sensor_zone == event_zone {
+            return true;
+        }
+    }
+
+    !saw_sensor_zone
 }
 
 #[cfg(test)]
@@ -110,7 +119,9 @@ mod tests {
             "observation".into(),
             BTreeMap::new(),
         );
-        assert!(Correlator::default().correlate(&event, &window("north"), &template()).is_some());
+        assert!(Correlator::default()
+            .correlate(&event, &window("north"), &template())
+            .is_some());
     }
 
     #[test]
@@ -122,15 +133,25 @@ mod tests {
             "observation".into(),
             BTreeMap::new(),
         );
-        assert!(Correlator::default().correlate(&event, &window("north"), &template()).is_none());
+        assert!(Correlator::default()
+            .correlate(&event, &window("north"), &template())
+            .is_none());
     }
 
     #[test]
     fn occlusion_alone_remains_low_severity() {
         let mut attrs = BTreeMap::new();
         attrs.insert("face_occlusion".into(), "present".into());
-        let event = CameraEvent::new("cam".into(), 1_000, Some("north".into()), "observation".into(), attrs);
-        let safety = Correlator::default().correlate(&event, &window("north"), &template()).expect("correlate");
+        let event = CameraEvent::new(
+            "cam".into(),
+            1_000,
+            Some("north".into()),
+            "observation".into(),
+            attrs,
+        );
+        let safety = Correlator::default()
+            .correlate(&event, &window("north"), &template())
+            .expect("correlate");
         assert!(safety.severity < 50);
     }
 }

@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - main
-      - feature/flock-signal-platform
 
 permissions:
   contents: read
@@ -53,9 +52,33 @@ jobs:
         with:
           components: rustfmt, clippy
 
-      - name: Verify Rust and C++
+      - name: Rustfmt
         shell: pwsh
-        run: .\scripts\verify.ps1
+        run: cargo fmt --all --check
+
+      - name: Clippy
+        shell: pwsh
+        run: cargo clippy --locked --workspace --all-targets -- -D warnings
+
+      - name: Rust tests
+        shell: pwsh
+        run: cargo test --locked --workspace --all-targets
+
+      - name: Rust release build
+        shell: pwsh
+        run: cargo build --locked --workspace --release
+
+      - name: Configure CMake
+        shell: pwsh
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build C++ interoperability target
+        shell: pwsh
+        run: cmake --build build --config Release
+
+      - name: Run C++ interoperability tests
+        shell: pwsh
+        run: ctest --test-dir build --output-on-failure -C Release
 
       - name: Package Windows evaluation bundle
         shell: pwsh

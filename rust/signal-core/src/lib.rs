@@ -116,7 +116,12 @@ pub struct SafetyEvent {
 }
 
 impl SafetyEvent {
-    pub fn new(camera_event_id: Uuid, template_ids: Vec<Uuid>, severity: u8, reasons: Vec<String>) -> Self {
+    pub fn new(
+        camera_event_id: Uuid,
+        template_ids: Vec<Uuid>,
+        severity: u8,
+        reasons: Vec<String>,
+    ) -> Self {
         Self {
             event_id: Uuid::new_v4(),
             camera_event_id,
@@ -157,7 +162,10 @@ mod tests {
             "observation".into(),
             attributes,
         );
-        assert_eq!(event.attributes.get("face_occlusion").map(String::as_str), Some("present"));
+        assert_eq!(
+            event.attributes.get("face_occlusion").map(String::as_str),
+            Some("present")
+        );
         assert_eq!(event.event_kind, "observation");
     }
 
@@ -172,14 +180,27 @@ mod tests {
             [1_u8; 32],
         );
         let json = serde_json::to_string(&template).expect("serialize template");
-        for forbidden in ["person_name", "person_id", "government_id", "face_embedding"] {
-            assert!(!json.contains(forbidden), "forbidden field leaked: {forbidden}");
+        for forbidden in [
+            "person_name",
+            "person_id",
+            "government_id",
+            "face_embedding",
+        ] {
+            assert!(
+                !json.contains(forbidden),
+                "forbidden field leaked: {forbidden}"
+            );
         }
     }
 
     #[test]
     fn safety_event_always_requires_human_review() {
-        let event = SafetyEvent::new(Uuid::new_v4(), Vec::new(), 250, vec!["restricted-zone".into()]);
+        let event = SafetyEvent::new(
+            Uuid::new_v4(),
+            Vec::new(),
+            250,
+            vec!["restricted-zone".into()],
+        );
         assert_eq!(event.severity, 100);
         assert!(event.requires_human_review);
     }
