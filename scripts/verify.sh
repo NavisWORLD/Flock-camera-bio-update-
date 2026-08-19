@@ -7,13 +7,10 @@ cd "$ROOT"
 command -v cargo >/dev/null || { echo "cargo is required" >&2; exit 2; }
 command -v cmake >/dev/null || { echo "cmake is required" >&2; exit 2; }
 
-# Debug-stage formatter: normalize the ephemeral CI checkout so Clippy/tests can
-# expose downstream failures. This is restored to `cargo fmt --all --check`
-# before the hardening PR is eligible to merge.
-cargo fmt --all
-cargo clippy --workspace --all-targets -- -D warnings
-cargo test --workspace --all-targets
-cargo build --workspace --release
+cargo fmt --all --check
+cargo clippy --locked --workspace --all-targets -- -D warnings
+cargo test --locked --workspace --all-targets
+cargo build --locked --workspace --release
 
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release
