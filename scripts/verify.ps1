@@ -13,9 +13,9 @@ $Root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 Push-Location $Root
 try {
     cargo fmt --all --check
-    cargo clippy --workspace --all-targets -- -D warnings
-    cargo test --workspace --all-targets
-    cargo build --workspace --release
+    cargo clippy --locked --workspace --all-targets -- -D warnings
+    cargo test --locked --workspace --all-targets
+    cargo build --locked --workspace --release
 
     cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
     cmake --build build --config Release
