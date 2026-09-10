@@ -37,7 +37,7 @@ jobs:
           cp compliance/SCIENTIFIC_CLAIMS.md compliance/SECURITY_CONTROLS.md compliance/THREAT_MODEL.md dist/linux/docs/
           tar -C dist -czf flock-signal-linux-x86_64.tar.gz linux
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: flock-signal-linux-x86_64
           path: flock-signal-linux-x86_64.tar.gz
@@ -94,7 +94,7 @@ jobs:
           Copy-Item compliance\SCIENTIFIC_CLAIMS.md, compliance\SECURITY_CONTROLS.md, compliance\THREAT_MODEL.md dist\windows\docs\
           Compress-Archive -Path dist\windows\* -DestinationPath flock-signal-windows-x86_64.zip -Force
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: flock-signal-windows-x86_64
           path: flock-signal-windows-x86_64.zip
