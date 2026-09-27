@@ -301,4 +301,4 @@ These documents distinguish repository deliverables from external actions still 
 
 ## License
 
-This repository uses a proprietary all-rights-reserved notice. Review `LICENSE` before evaluation, copying, reuse, modification, integration, redistribution, deployment, or commercialization. Third-party dependencies remain governed by their own licenses.
+Original code owned or controlled by Cory Shane Davis / NavisWORLD is offered under [Apache License 2.0](LICENSE) in this proposed release, permitting modification, redistribution and commercial use under its terms. Third-party dependencies, non-public footage, datasets and biometric data are not sublicensed; see [OPEN_SOURCE_SCOPE.md](OPEN_SOURCE_SCOPE.md). This independent project is not affiliated with Flock Safety.
