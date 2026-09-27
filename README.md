@@ -301,4 +301,4 @@ These documents distinguish repository deliverables from external actions still 
 
 ## License
 
-This repository uses a proprietary all-rights-reserved notice. Review `LICENSE` before evaluation, copying, reuse, modification, integration, redistribution, deployment, or commercialization. Third-party dependencies remain governed by their own licenses.
+Original Cory Davis / NavisWORLD-owned software and documentation in revisions adopting the root `LICENSE` are licensed under Apache License 2.0, subject to file-level exceptions. It permits reuse, modification, redistribution and commercial use under its terms. Third-party SDKs, datasets, recordings, trademarks and private camera/biometric information retain their separate rights. **This license is not authorization to access anyone's camera or sensitive data or to deploy this experimental platform without applicable approval.** See `LICENSE_HISTORY.md` and `NOTICE.md`.
